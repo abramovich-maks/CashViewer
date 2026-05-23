@@ -1,3 +1,9 @@
 spring:
   application:
     name: CashViewer
+
+  #PostgreSQL
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
