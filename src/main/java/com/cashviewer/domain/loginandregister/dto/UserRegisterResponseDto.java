@@ -9,7 +9,7 @@ import lombok.Builder;
 
 @Builder
 public record UserRegisterResponseDto(
-        Long userId,
+        Long id,
         String username,
         String email
 ) {

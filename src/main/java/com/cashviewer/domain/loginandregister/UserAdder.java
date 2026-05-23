@@ -5,10 +5,12 @@ import com.cashviewer.domain.loginandregister.dto.UserRegisterResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
 
 @AllArgsConstructor
 @Log4j2
+@Component
 class UserAdder {
 
     private final UserRepository userRepository;

@@ -2,9 +2,11 @@ package com.cashviewer.domain.loginandregister;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
 @Log4j2
+@Component
 class UserRetriever {
 
     private final UserRepository userRepository;
