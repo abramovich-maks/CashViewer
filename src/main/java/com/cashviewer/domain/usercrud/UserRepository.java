@@ -1,4 +1,4 @@
-package com.cashviewer.domain.loginandregister;
+package com.cashviewer.domain.usercrud;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

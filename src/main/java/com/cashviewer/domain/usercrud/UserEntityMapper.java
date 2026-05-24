@@ -1,6 +1,6 @@
-package com.cashviewer.domain.loginandregister;
+package com.cashviewer.domain.usercrud;
 
-import com.cashviewer.domain.loginandregister.dto.UserRegisterResponseDto;
+import com.cashviewer.domain.usercrud.dto.UserRegisterResponseDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;

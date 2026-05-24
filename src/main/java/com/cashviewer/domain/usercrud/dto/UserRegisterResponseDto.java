@@ -1,6 +1,6 @@
-package com.cashviewer.domain.loginandregister.dto;
+package com.cashviewer.domain.usercrud.dto;
 
-import com.cashviewer.domain.loginandregister.UserEntity;
+import com.cashviewer.domain.usercrud.UserEntity;
 import lombok.Builder;
 
 /**

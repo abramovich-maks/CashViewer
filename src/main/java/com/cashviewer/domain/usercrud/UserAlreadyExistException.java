@@ -1,4 +1,4 @@
-package com.cashviewer.domain.loginandregister;
+package com.cashviewer.domain.usercrud;
 
 public class UserAlreadyExistException extends RuntimeException {
 

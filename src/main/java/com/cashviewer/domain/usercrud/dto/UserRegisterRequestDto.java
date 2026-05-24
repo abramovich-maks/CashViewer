@@ -1,4 +1,4 @@
-package com.cashviewer.domain.loginandregister.dto;
+package com.cashviewer.domain.usercrud.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;

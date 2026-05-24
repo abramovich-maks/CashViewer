@@ -1,11 +1,13 @@
-package com.cashviewer.domain.loginandregister;
+package com.cashviewer.domain.usercrud;
 
-import com.cashviewer.domain.loginandregister.dto.UserRegisterRequestDto;
-import com.cashviewer.domain.loginandregister.dto.UserRegisterResponseDto;
+import com.cashviewer.domain.usercrud.dto.UserRegisterRequestDto;
+import com.cashviewer.domain.usercrud.dto.UserRegisterResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 
 @AllArgsConstructor
@@ -22,7 +24,7 @@ class UserAdder {
         String email = requestDto.email().trim().toLowerCase();
         userRetriever.checkEmailExists(email);
         String encodedPassword = bCryptpasswordEncoder.encode(requestDto.password());
-        UserEntity createdUser = UserEntity.builder().username(requestDto.username()).email(email).password(encodedPassword).build();
+        UserEntity createdUser = new UserEntity(List.of(Role.ROLE_USER.name()), true, encodedPassword, email, requestDto.username());
         UserEntity savedUser = userRepository.save(createdUser);
         log.info("Saved user with id: {}, email: {}", savedUser.getId(), savedUser.getEmail());
         return userEntityMapper.toUserRegisterResponseDto(savedUser);
