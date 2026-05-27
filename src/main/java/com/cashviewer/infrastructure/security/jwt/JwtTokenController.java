@@ -1,7 +1,6 @@
 package com.cashviewer.infrastructure.security.jwt;
 
 
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +16,8 @@ class JwtTokenController {
 
 
     @PostMapping("/token")
-    public ResponseEntity<JwtResponseDto> generateAccessToken(@RequestBody @Valid TokenRequestDto dto, HttpServletResponse response) {
-        String token = tokenGenerator.generateAccessToken(dto.email(), dto.password());
+    public ResponseEntity<JwtResponseDto> generateAccessToken(@RequestBody @Valid TokenRequestDto dto) {
+        String token = tokenGenerator.authenticateAndGenerateToken(dto.email(), dto.password());
         return ResponseEntity.ok(
                 JwtResponseDto.builder()
                         .token(token)

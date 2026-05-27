@@ -16,3 +16,8 @@ spring:
     properties:
       hibernate:
         format_sql: false
+  ## Token jwt
+auth:
+  jwt:
+    issuer: Cash_Viewer
+    expiration-minutes: 10
