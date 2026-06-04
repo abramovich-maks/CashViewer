@@ -34,7 +34,7 @@ public class UserEntity {
             sequenceName = "users_id_seq",
             allocationSize = 1
     )
-    @Column(name = "user_id")
+    @Column(name = "id")
     private Long id;
 
     @NotBlank

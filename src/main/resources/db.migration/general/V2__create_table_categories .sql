@@ -1,0 +1,11 @@
+CREATE TABLE categories
+(
+    id   BIGSERIAL      PRIMARY KEY ,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(255) NOT NULL,
+    owner VARCHAR(255) NOT NULL,
+    user_id BIGINT
+);
+
+ALTER TABLE categories
+    ADD CONSTRAINT FK_CATEGORIES_ON_USER FOREIGN KEY (user_id) REFERENCES users (id);
