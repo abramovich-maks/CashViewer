@@ -1,6 +1,6 @@
 package com.cashviewer.domain.category;
 
-enum CategoryType {
+public enum CategoryType {
     INCOME,
     EXPENSE,
     DEBT
