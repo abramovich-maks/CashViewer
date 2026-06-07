@@ -36,6 +36,10 @@ public class SecurityUser implements UserDetails {
         return user.email();
     }
 
+    public Long getId() {
+        return user.id();
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;

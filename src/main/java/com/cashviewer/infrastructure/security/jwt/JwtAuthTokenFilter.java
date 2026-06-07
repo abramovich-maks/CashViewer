@@ -2,6 +2,7 @@ package com.cashviewer.infrastructure.security.jwt;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.cashviewer.infrastructure.security.CurrentUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,13 +32,15 @@ public class JwtAuthTokenFilter extends OncePerRequestFilter {
             try {
                 DecodedJWT decodedJWT = jwtTokenValidator.verifyAccessToken(token);
                 String login = decodedJWT.getSubject();
+                Long userId = decodedJWT.getClaim("userId").asLong();
+                CurrentUser currentUser = new CurrentUser(userId, login);
                 List<SimpleGrantedAuthority> roles = decodedJWT.getClaim("roles")
                         .asList(String.class)
                         .stream()
                         .map(SimpleGrantedAuthority::new)
                         .toList();
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(login, null, roles);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(currentUser, null, roles);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (JWTVerificationException ex) {
                 log.warn("Invalid or expired JWT token: {}", ex.getMessage());

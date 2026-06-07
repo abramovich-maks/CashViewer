@@ -6,6 +6,7 @@ import java.util.Collection;
 
 @Builder
 public record UserDtoResponse(
+        Long id,
         String email,
         String password,
         boolean enabled,

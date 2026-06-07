@@ -176,4 +176,15 @@ class CategoryRepositoryTestImpl implements CategoryRepository {
     public Page<CategoryEntity> findAll(final Pageable pageable) {
         return null;
     }
+
+    @Override
+    public List<CategoryEntity> findAllAvailableForUser(Long userId) {
+
+        return database.values()
+                .stream()
+                .filter(category ->
+                        category.getOwnerType() == CategoryOwnerType.SYSTEM
+                                || category.getUser().getId().equals(userId))
+                .toList();
+    }
 }

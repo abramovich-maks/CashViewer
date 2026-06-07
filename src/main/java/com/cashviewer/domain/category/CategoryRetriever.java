@@ -20,8 +20,8 @@ class CategoryRetriever {
         return categoryEntityMapper.toCategoryDto(category);
     }
 
-    public AllCategoryDto getAllCategories() {
-        List<CategoryEntity> all = categoryRepository.findAll();
-        return categoryEntityMapper.toCategoryListDto(all);
+    public AllCategoryDto getAllCategories(Long userId) {
+        List<CategoryEntity> categories = categoryRepository.findAllAvailableForUser(userId);
+        return categoryEntityMapper.toCategoryListDto(categories);
     }
 }

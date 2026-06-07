@@ -2,18 +2,22 @@ package com.cashviewer.domain.category;
 
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
+import com.cashviewer.infrastructure.security.AuthenticationFacade;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CategoryFacadeTest {
 
     CategoryRepository categoryRepository = new CategoryRepositoryTestImpl();
     CategoryEntityMapper categoryEntityMapper = new CategoryEntityMapperImpl();
+    AuthenticationFacade authenticationFacade = mock(AuthenticationFacade.class);
     CategoryRetriever categoryRetriever = new CategoryRetriever(categoryRepository, categoryEntityMapper);
-    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever);
+    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade);
 
     @Test
     public void should_exception_when_find_category_with_not_found_id() {
@@ -47,12 +51,16 @@ class CategoryFacadeTest {
         CategoryEntity firstCategory = new CategoryEntity();
         firstCategory.setId(1L);
         firstCategory.setName("Home");
+        firstCategory.setOwnerType(CategoryOwnerType.SYSTEM);
         firstCategory.setType(CategoryType.EXPENSE);
 
         CategoryEntity secondCategory = new CategoryEntity();
         secondCategory.setId(2L);
         secondCategory.setName("Food");
+        secondCategory.setOwnerType(CategoryOwnerType.SYSTEM);
         secondCategory.setType(CategoryType.EXPENSE);
+
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
 
         categoryRepository.save(firstCategory);
         categoryRepository.save(secondCategory);

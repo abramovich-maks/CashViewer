@@ -40,6 +40,7 @@ class JwtTokenGenerator {
                 .withIssuedAt(issuedAt)
                 .withExpiresAt(expiresAt)
                 .withIssuer(properties.issuer())
+                .withClaim("userId", securityUser.getId())
                 .withClaim(ROLES_CLAIM_NAME, securityUser.getAuthoritiesAsString())
                 .sign(algorithm);
     }
