@@ -24,4 +24,8 @@ class CategoryRetriever {
         List<CategoryEntity> categories = categoryRepository.findAllAvailableForUser(userId);
         return categoryEntityMapper.toCategoryListDto(categories);
     }
+
+    public boolean existsCategoryByUserIdAndName(final Long currentUserId, final String categoryName) {
+        return categoryRepository.existsByUserIdAndName(currentUserId, categoryName);
+    }
 }

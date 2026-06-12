@@ -27,4 +27,8 @@ public class UserFacade {
     public boolean userExists(final String email) {
         return userRetriever.userExists(email);
     }
+
+    public UserEntity findById(final Long currentUserId) {
+        return userRetriever.findById(currentUserId);
+    }
 }

@@ -1,5 +1,7 @@
 package com.cashviewer.domain.category;
 
+import com.cashviewer.domain.category.dto.AddCategoryRequestDto;
+import com.cashviewer.domain.category.dto.AddCategoryResponseDto;
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
 import com.cashviewer.infrastructure.security.AuthenticationFacade;
@@ -12,6 +14,7 @@ public class CategoryFacade {
 
     private final CategoryRetriever categoryRetriever;
     private final AuthenticationFacade authenticationFacade;
+    private final CategoryAdder categoryAdder;
 
 
     public CategoryDto getCategoryById(Long categoryId) {
@@ -23,9 +26,13 @@ public class CategoryFacade {
         return categoryRetriever.getAllCategories(currentUserId);
     }
 
+    public AddCategoryResponseDto addCategory(AddCategoryRequestDto requestDto) {
+        Long currentUserId = authenticationFacade.getCurrentUserId();
+        return categoryAdder.addCategoryForUser(currentUserId, requestDto);
+    }
+
     /*
      todo :
-      addCategory
       editCategory
       deleteCategory
       addSubCategory

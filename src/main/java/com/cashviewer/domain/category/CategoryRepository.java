@@ -13,4 +13,6 @@ interface CategoryRepository extends JpaRepository<CategoryEntity, Long> {
                    OR c.user.id = :userId
             """)
     List<CategoryEntity> findAllAvailableForUser(Long userId);
+
+    boolean existsByUserIdAndName(Long userId, String name);
 }
