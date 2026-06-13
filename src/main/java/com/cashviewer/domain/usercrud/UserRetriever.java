@@ -22,6 +22,7 @@ class UserRetriever {
     public Optional<UserDtoResponse> findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .map(user -> UserDtoResponse.builder()
+                        .id(user.getId())
                         .email(user.getEmail())
                         .password(user.getPassword())
                         .enabled(user.isEnabled())
