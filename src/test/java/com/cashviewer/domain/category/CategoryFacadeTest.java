@@ -1,7 +1,11 @@
 package com.cashviewer.domain.category;
 
+import com.cashviewer.domain.category.dto.AddCategoryRequestDto;
+import com.cashviewer.domain.category.dto.AddCategoryResponseDto;
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
+import com.cashviewer.domain.usercrud.UserEntity;
+import com.cashviewer.domain.usercrud.UserFacade;
 import com.cashviewer.infrastructure.security.AuthenticationFacade;
 import org.junit.jupiter.api.Test;
 
@@ -16,8 +20,10 @@ class CategoryFacadeTest {
     CategoryRepository categoryRepository = new CategoryRepositoryTestImpl();
     CategoryEntityMapper categoryEntityMapper = new CategoryEntityMapperImpl();
     AuthenticationFacade authenticationFacade = mock(AuthenticationFacade.class);
+    UserFacade userFacade = mock(UserFacade.class);
     CategoryRetriever categoryRetriever = new CategoryRetriever(categoryRepository, categoryEntityMapper);
-    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade);
+    CategoryAdder categoryAdder = new CategoryAdder(categoryRetriever, categoryRepository, userFacade);
+    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade, categoryAdder);
 
     @Test
     public void should_exception_when_find_category_with_not_found_id() {
@@ -74,5 +80,42 @@ class CategoryFacadeTest {
                         tuple(1L, "Home"),
                         tuple(2L, "Food")
                 );
+    }
+
+    @Test
+    void should_add_category() {
+        // given
+        AddCategoryRequestDto requestDto = new AddCategoryRequestDto(CategoryType.INCOME, "Present");
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        when(userFacade.findById(1L)).thenReturn(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        // when
+        AddCategoryResponseDto responseDto = categoryFacade.addCategory(requestDto);
+        // then
+        AllCategoryDto allCategories = categoryFacade.getAllCategories();
+        assertThat(allCategories.categoryDtos()).hasSize(1);
+        assertThat(responseDto.categoryName()).isEqualTo("Present");
+        assertThat(allCategories.categoryDtos())
+                .extracting(CategoryDto::name)
+                .containsExactlyInAnyOrder("Present");
+    }
+
+    @Test
+    void should_exception_when_user_add_exist_category() {
+        // given
+        String categoryName = "Present";
+        AddCategoryRequestDto requestDto = new AddCategoryRequestDto(CategoryType.INCOME, categoryName);
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        when(userFacade.findById(1L)).thenReturn(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        categoryFacade.addCategory(requestDto);
+        // when && then
+        CategoryAlreadyExistsException exception = assertThrows(CategoryAlreadyExistsException.class, () -> categoryFacade.addCategory(requestDto));
+        assertThat(exception.getMessage()).isEqualTo("Category with name " + categoryName + " already exists");
+        AllCategoryDto allCategories = categoryFacade.getAllCategories();
+        assertThat(allCategories.categoryDtos()).hasSize(1);
+
     }
 }

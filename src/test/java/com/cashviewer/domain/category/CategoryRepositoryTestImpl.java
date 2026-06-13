@@ -103,7 +103,7 @@ class CategoryRepositoryTestImpl implements CategoryRepository {
     @Override
     public <S extends CategoryEntity> S save(S entity) {
 
-        if(entity.getId() == null) {
+        if (entity.getId() == null) {
             entity.setId((long) index.getAndIncrement());
         }
 
@@ -186,5 +186,15 @@ class CategoryRepositoryTestImpl implements CategoryRepository {
                         category.getOwnerType() == CategoryOwnerType.SYSTEM
                                 || category.getUser().getId().equals(userId))
                 .toList();
+    }
+
+    @Override
+    public boolean existsByUserIdAndName(final Long userId, final String name) {
+        return database.values()
+                .stream()
+                .anyMatch(category ->
+                        category.getUser() != null &&
+                                category.getUser().getId().equals(userId) &&
+                                category.getName().equals(name));
     }
 }
