@@ -4,6 +4,8 @@ import com.cashviewer.domain.category.dto.AddCategoryRequestDto;
 import com.cashviewer.domain.category.dto.AddCategoryResponseDto;
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
+import com.cashviewer.domain.category.dto.UpdateCategoryRequest;
+import com.cashviewer.domain.category.dto.UpdateCategoryResponse;
 import com.cashviewer.infrastructure.security.AuthenticationFacade;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ public class CategoryFacade {
     private final CategoryRetriever categoryRetriever;
     private final AuthenticationFacade authenticationFacade;
     private final CategoryAdder categoryAdder;
+    private final CategoryEditor categoryEditor;
 
 
     public CategoryDto getCategoryById(Long categoryId) {
@@ -32,12 +35,19 @@ public class CategoryFacade {
         return categoryAdder.addCategoryForUser(currentUserId, requestDto);
     }
 
+    public UpdateCategoryResponse updateCategory(UpdateCategoryRequest requestDto) {
+        Long currentUserId = authenticationFacade.getCurrentUserId();
+        return categoryEditor.updateCategory(currentUserId, requestDto);
+    }
     /*
      todo :
-      editCategory
       deleteCategory
       addSubCategory
       editSubCategory
       deleteSubCategory
+      getOnlyCategories
+      getIncomeCategory
+      getExpenseCategory
+      getDebtCategory
      */
 }

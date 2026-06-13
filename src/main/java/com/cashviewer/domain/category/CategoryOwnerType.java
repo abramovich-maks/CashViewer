@@ -1,6 +1,6 @@
 package com.cashviewer.domain.category;
 
-enum CategoryOwnerType {
+public enum CategoryOwnerType {
     SYSTEM,
     USER
 }
