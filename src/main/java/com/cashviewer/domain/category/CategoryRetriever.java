@@ -14,8 +14,8 @@ class CategoryRetriever {
     private final CategoryRepository categoryRepository;
     private final CategoryEntityMapper categoryEntityMapper;
 
-    public CategoryDto getCategory(Long categoryId) {
-        CategoryEntity category = categoryRepository.findById(categoryId).
+    public CategoryDto getCategory(Long categoryId, Long currentUserId) {
+        CategoryEntity category = categoryRepository.findAvailableCategoryForUser(categoryId, currentUserId).
                 orElseThrow(() -> new CategoryNotFoundException(categoryId));
         return categoryEntityMapper.toCategoryDto(category);
     }

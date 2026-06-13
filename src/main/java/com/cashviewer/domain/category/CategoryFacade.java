@@ -18,7 +18,8 @@ public class CategoryFacade {
 
 
     public CategoryDto getCategoryById(Long categoryId) {
-        return categoryRetriever.getCategory(categoryId);
+        Long currentUserId = authenticationFacade.getCurrentUserId();
+        return categoryRetriever.getCategory(categoryId, currentUserId);
     }
 
     public AllCategoryDto getAllCategories() {

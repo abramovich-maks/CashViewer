@@ -197,4 +197,14 @@ class CategoryRepositoryTestImpl implements CategoryRepository {
                                 category.getUser().getId().equals(userId) &&
                                 category.getName().equals(name));
     }
+
+    @Override
+    public Optional<CategoryEntity> findAvailableCategoryForUser(Long categoryId, Long userId) {
+        return database.values()
+                .stream()
+                .filter(category ->
+                        category.getId().equals(categoryId) && (
+                                category.getOwnerType() == CategoryOwnerType.SYSTEM || (category.getUser() != null && category.getUser().getId().equals(userId))))
+                .findFirst();
+    }
 }

@@ -37,11 +37,17 @@ class CategoryFacadeTest {
     @Test
     void should_get_category_by_id() {
         // given
-
         CategoryEntity categoryEntity = new CategoryEntity();
         categoryEntity.setId(1L);
         categoryEntity.setName("Food");
         categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        categoryEntity.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
 
         categoryRepository.save(categoryEntity);
         // when
@@ -49,6 +55,30 @@ class CategoryFacadeTest {
         // then
         assertThat(category.id()).isEqualTo(1L);
         assertThat(category.name()).isEqualTo("Food");
+    }
+
+    @Test
+    void should_not_get_category_of_another_user() {
+        // given
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(1L);
+        categoryEntity.setName("Food");
+        categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        categoryEntity.setUser(user);
+        categoryRepository.save(categoryEntity);
+
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        // then
+        CategoryDto categoryForFirstUser = categoryFacade.getCategoryById(1L);
+        assertThat(categoryForFirstUser.id()).isEqualTo(1L);
+        assertThat(categoryForFirstUser.name()).isEqualTo("Food");
+        // when && then
+        when(authenticationFacade.getCurrentUserId()).thenReturn(2L);
+        assertThrows(CategoryNotFoundException.class, () -> categoryFacade.getCategoryById(1L));
     }
 
     @Test
