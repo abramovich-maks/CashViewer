@@ -4,6 +4,8 @@ import com.cashviewer.domain.category.dto.AddCategoryRequestDto;
 import com.cashviewer.domain.category.dto.AddCategoryResponseDto;
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
+import com.cashviewer.domain.category.dto.UpdateCategoryRequest;
+import com.cashviewer.domain.category.dto.UpdateCategoryResponse;
 import com.cashviewer.domain.usercrud.UserEntity;
 import com.cashviewer.domain.usercrud.UserFacade;
 import com.cashviewer.infrastructure.security.AuthenticationFacade;
@@ -23,7 +25,8 @@ class CategoryFacadeTest {
     UserFacade userFacade = mock(UserFacade.class);
     CategoryRetriever categoryRetriever = new CategoryRetriever(categoryRepository, categoryEntityMapper);
     CategoryAdder categoryAdder = new CategoryAdder(categoryRetriever, categoryRepository, userFacade);
-    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade, categoryAdder);
+    CategoryEditor categoryEditor = new CategoryEditor(categoryRetriever, categoryRepository);
+    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade, categoryAdder, categoryEditor);
 
     @Test
     public void should_exception_when_find_category_with_not_found_id() {
@@ -146,6 +149,212 @@ class CategoryFacadeTest {
         assertThat(exception.getMessage()).isEqualTo("Category with name " + categoryName + " already exists");
         AllCategoryDto allCategories = categoryFacade.getAllCategories();
         assertThat(allCategories.categoryDtos()).hasSize(1);
+    }
+
+    @Test
+    void should_update_category_name() {
+        // given
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(1L);
+        categoryEntity.setName("Food");
+        categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        categoryEntity.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(categoryEntity);
+        CategoryDto category = categoryFacade.getCategoryById(1L);
+        assertThat(category.name()).isEqualTo("Food");
+
+        UpdateCategoryRequest update = new UpdateCategoryRequest(1L, "Update Food");
+        // when
+        UpdateCategoryResponse updateCategory = categoryFacade.updateCategory(update);
+        // then
+        assertThat(updateCategory.newCategoryName()).isEqualTo("Update Food");
+        CategoryDto updatedCategory = categoryFacade.getCategoryById(1L);
+        assertThat(updatedCategory.name()).isEqualTo("Update Food");
+    }
+
+    @Test
+    void should_not_update_system_category() {
+        // given
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(1L);
+        categoryEntity.setName("Food");
+        categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.SYSTEM);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        categoryEntity.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(categoryEntity);
+
+        UpdateCategoryRequest update = new UpdateCategoryRequest(1L, "Update Food");
+        // when && then
+        CannotEditSystemCategoryException exception = assertThrows(CannotEditSystemCategoryException.class, () -> categoryFacade.updateCategory(update));
+        assertThat(exception.getMessage()).isEqualTo("System category cannot be edited");
+        CategoryDto updatedCategory = categoryFacade.getCategoryById(1L);
+        assertThat(updatedCategory.name()).isEqualTo("Food");
+    }
+
+    @Test
+    void should_not_update_category_of_another_user() {
+        // given
+
+
+        CategoryEntity categoryEntity = new CategoryEntity();
+        long idCategory = 1L;
+        categoryEntity.setId(idCategory);
+        categoryEntity.setName("Food");
+        categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        categoryEntity.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(categoryEntity);
+        CategoryDto category = categoryFacade.getCategoryById(idCategory);
+        assertThat(category.name()).isEqualTo("Food");
+
+        when(authenticationFacade.getCurrentUserId()).thenReturn(2L);
+        UpdateCategoryRequest update = new UpdateCategoryRequest(idCategory, "Update Food");
+        // when
+        CategoryNotFoundException exception = assertThrows(CategoryNotFoundException.class, () -> categoryFacade.updateCategory(update));
+        // then
+        assertThat(exception.getMessage()).isEqualTo("Category with id: " + idCategory + " not found");
+
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        CategoryDto categoryByFirstUser = categoryFacade.getCategoryById(idCategory);
+        assertThat(categoryByFirstUser.name()).isEqualTo("Food");
+    }
+
+    @Test
+    void should_throw_exception_when_new_name_already_exists() {
+        // given
+        CategoryEntity firstCategory = new CategoryEntity();
+        firstCategory.setId(1L);
+        firstCategory.setName("Food");
+        firstCategory.setType(CategoryType.EXPENSE);
+        firstCategory.setOwnerType(CategoryOwnerType.USER);
+
+        CategoryEntity secondCategory = new CategoryEntity();
+        secondCategory.setId(2L);
+        secondCategory.setName("Home");
+        secondCategory.setType(CategoryType.EXPENSE);
+        secondCategory.setOwnerType(CategoryOwnerType.USER);
+
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        firstCategory.setUser(user);
+        secondCategory.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(firstCategory);
+        categoryRepository.save(secondCategory);
+        AllCategoryDto allCategories = categoryFacade.getAllCategories();
+        assertThat(allCategories.categoryDtos()).hasSize(2);
+        assertThat(allCategories.categoryDtos())
+                .extracting(CategoryDto::id, CategoryDto::name)
+                .containsExactlyInAnyOrder(
+                        tuple(1L, "Food"),
+                        tuple(2L, "Home")
+                );
+
+        UpdateCategoryRequest update = new UpdateCategoryRequest(2L, "Food");
+        // when
+        CategoryAlreadyExistsException exception = assertThrows(CategoryAlreadyExistsException.class, () -> categoryFacade.updateCategory(update));
+        // then
+        assertThat(exception.getMessage()).isEqualTo("Category with name Food already exists");
+    }
+
+    @Test
+    void should_not_throw_exception_when_name_is_the_same() {
+        // given
+        CategoryEntity firstCategory = new CategoryEntity();
+        firstCategory.setId(1L);
+        firstCategory.setName("Food");
+        firstCategory.setType(CategoryType.EXPENSE);
+        firstCategory.setOwnerType(CategoryOwnerType.USER);
+
+        CategoryEntity secondCategory = new CategoryEntity();
+        secondCategory.setId(2L);
+        secondCategory.setName("Home");
+        secondCategory.setType(CategoryType.EXPENSE);
+        secondCategory.setOwnerType(CategoryOwnerType.USER);
+
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        firstCategory.setUser(user);
+        secondCategory.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(firstCategory);
+        categoryRepository.save(secondCategory);
+        AllCategoryDto allCategories = categoryFacade.getAllCategories();
+        assertThat(allCategories.categoryDtos()).hasSize(2);
+        assertThat(allCategories.categoryDtos())
+                .extracting(CategoryDto::id, CategoryDto::name)
+                .containsExactlyInAnyOrder(
+                        tuple(1L, "Food"),
+                        tuple(2L, "Home")
+                );
+
+        UpdateCategoryRequest update = new UpdateCategoryRequest(2L, "Home");
+        // when
+        categoryFacade.updateCategory(update);
+        // then
+        assertThat(allCategories.categoryDtos())
+                .extracting(CategoryDto::id, CategoryDto::name)
+                .containsExactlyInAnyOrder(
+                        tuple(1L, "Food"),
+                        tuple(2L, "Home")
+                );
+    }
+
+    @Test
+    void should_not_update_category_when_system_category_with_same_name_exists() {
+        // given
+        CategoryEntity systemCategory = new CategoryEntity();
+        systemCategory.setId(1L);
+        systemCategory.setName("Food");
+        systemCategory.setType(CategoryType.EXPENSE);
+        systemCategory.setOwnerType(CategoryOwnerType.SYSTEM);
+
+        CategoryEntity userCategory = new CategoryEntity();
+        userCategory.setId(2L);
+        userCategory.setName("Home");
+        userCategory.setType(CategoryType.EXPENSE);
+        userCategory.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        userCategory.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(systemCategory);
+        categoryRepository.save(userCategory);
+
+        UpdateCategoryRequest update = new UpdateCategoryRequest(2L, "Food");
+
+        // when && then
+        CategoryAlreadyExistsException exception = assertThrows(CategoryAlreadyExistsException.class, () -> categoryFacade.updateCategory(update));
+
+        assertThat(exception.getMessage()).isEqualTo("Category with name Food already exists");
 
     }
 }

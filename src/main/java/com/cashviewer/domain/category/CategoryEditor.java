@@ -17,7 +17,7 @@ class CategoryEditor {
         if (categoryEntity.getOwnerType().equals(CategoryOwnerType.SYSTEM)) {
             throw new CannotEditSystemCategoryException();
         }
-        if (categoryRetriever.existsCategoryByUserIdAndName(currentUserId, requestDto.newCategoryName())) {
+        if (!categoryEntity.getName().equals(requestDto.newCategoryName()) && categoryRetriever.existsCategoryByUserIdAndName(currentUserId, requestDto.newCategoryName())) {
             throw new CategoryAlreadyExistsException(requestDto.newCategoryName());
         }
 

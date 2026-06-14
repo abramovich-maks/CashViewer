@@ -189,13 +189,12 @@ class CategoryRepositoryTestImpl implements CategoryRepository {
     }
 
     @Override
-    public boolean existsByUserIdAndName(final Long userId, final String name) {
+    public boolean existsAvailableCategoryByName(final Long userId, final String name) {
         return database.values()
                 .stream()
                 .anyMatch(category ->
-                        category.getUser() != null &&
-                                category.getUser().getId().equals(userId) &&
-                                category.getName().equals(name));
+                        category.getName().equals(name) && (category.getOwnerType() == CategoryOwnerType.SYSTEM
+                                || (category.getUser() != null && category.getUser().getId().equals(userId))));
     }
 
     @Override

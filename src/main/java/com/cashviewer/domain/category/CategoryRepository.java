@@ -15,7 +15,16 @@ interface CategoryRepository extends JpaRepository<CategoryEntity, Long> {
             """)
     List<CategoryEntity> findAllAvailableForUser(Long userId);
 
-    boolean existsByUserIdAndName(Long userId, String name);
+    @Query("""
+                SELECT COUNT(c) > 0
+                FROM CategoryEntity c
+                WHERE c.name = :name
+                  AND (
+                        c.ownerType = 'SYSTEM'
+                        OR c.user.id = :userId
+                  )
+            """)
+    boolean existsAvailableCategoryByName(Long userId, String name);
 
     @Query("""
                 SELECT c

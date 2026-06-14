@@ -26,7 +26,7 @@ class CategoryRetriever {
     }
 
     public boolean existsCategoryByUserIdAndName(final Long currentUserId, final String categoryName) {
-        return categoryRepository.existsByUserIdAndName(currentUserId, categoryName);
+        return categoryRepository.existsAvailableCategoryByName(currentUserId, categoryName);
     }
 
     public CategoryEntity getCategoryEntity(Long categoryId, Long currentUserId) {
