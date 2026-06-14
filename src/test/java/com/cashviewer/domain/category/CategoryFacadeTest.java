@@ -4,6 +4,7 @@ import com.cashviewer.domain.category.dto.AddCategoryRequestDto;
 import com.cashviewer.domain.category.dto.AddCategoryResponseDto;
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
+import com.cashviewer.domain.category.dto.DeleteCategoryResponse;
 import com.cashviewer.domain.category.dto.UpdateCategoryRequest;
 import com.cashviewer.domain.category.dto.UpdateCategoryResponse;
 import com.cashviewer.domain.usercrud.UserEntity;
@@ -26,7 +27,8 @@ class CategoryFacadeTest {
     CategoryRetriever categoryRetriever = new CategoryRetriever(categoryRepository, categoryEntityMapper);
     CategoryAdder categoryAdder = new CategoryAdder(categoryRetriever, categoryRepository, userFacade);
     CategoryEditor categoryEditor = new CategoryEditor(categoryRetriever, categoryRepository);
-    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade, categoryAdder, categoryEditor);
+    CategoryDeleter categoryDeleter = new CategoryDeleter(categoryRetriever, categoryRepository);
+    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade, categoryAdder, categoryEditor, categoryDeleter);
 
     @Test
     public void should_exception_when_find_category_with_not_found_id() {
@@ -355,6 +357,85 @@ class CategoryFacadeTest {
         CategoryAlreadyExistsException exception = assertThrows(CategoryAlreadyExistsException.class, () -> categoryFacade.updateCategory(update));
 
         assertThat(exception.getMessage()).isEqualTo("Category with name Food already exists");
+    }
 
+    @Test
+    void should_delete_category() {
+        CategoryEntity userCategory = new CategoryEntity();
+        long idCategory = 1L;
+        userCategory.setId(idCategory);
+        userCategory.setName("Home");
+        userCategory.setType(CategoryType.EXPENSE);
+        userCategory.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        userCategory.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(userCategory);
+        // when
+        DeleteCategoryResponse response = categoryFacade.deleteCategory(idCategory);
+        // then
+        assertThat(response.id()).isEqualTo(idCategory);
+        assertThrows(CategoryNotFoundException.class, () -> categoryFacade.getCategoryById(1L));
+    }
+
+    @Test
+    void should_not_delete_system_category() {
+        // given
+        CategoryEntity systemCategory = new CategoryEntity();
+        long idCategory = 1L;
+        systemCategory.setId(idCategory);
+        systemCategory.setName("Home");
+        systemCategory.setType(CategoryType.EXPENSE);
+        systemCategory.setOwnerType(CategoryOwnerType.SYSTEM);
+
+        categoryRepository.save(systemCategory);
+        // when && then
+        CannotDeleteSystemCategoryException exception = assertThrows(CannotDeleteSystemCategoryException.class, () -> categoryFacade.deleteCategory(idCategory));
+        assertThat(exception.getMessage()).isEqualTo("System category cannot be deleted");
+    }
+
+    @Test
+    void should_not_delete_category_of_another_user() {
+        CategoryEntity userCategory = new CategoryEntity();
+        long idCategory = 1L;
+        userCategory.setId(idCategory);
+        userCategory.setName("Home");
+        userCategory.setType(CategoryType.EXPENSE);
+        userCategory.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        userCategory.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(2L);
+
+        categoryRepository.save(userCategory);
+        // when && then
+        assertThrows(CategoryNotFoundException.class, () -> categoryFacade.deleteCategory(idCategory));
+    }
+
+    @Test
+    void should_throw_exception_when_delete_not_existing_category() {
+        CategoryEntity userCategory = new CategoryEntity();
+        long idCategory = 1L;
+        long notExistingCategory = 123L;
+        userCategory.setId(idCategory);
+        userCategory.setName("Home");
+        userCategory.setType(CategoryType.EXPENSE);
+        userCategory.setOwnerType(CategoryOwnerType.USER);
+
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+
+        userCategory.setUser(user);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+
+        categoryRepository.save(userCategory);
+        // when && then
+        assertThrows(CategoryNotFoundException.class, () -> categoryFacade.deleteCategory(notExistingCategory));
     }
 }

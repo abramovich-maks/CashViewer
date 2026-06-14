@@ -148,8 +148,8 @@ class CategoryRepositoryTestImpl implements CategoryRepository {
     }
 
     @Override
-    public void delete(final CategoryEntity entity) {
-
+    public void delete(CategoryEntity entity) {
+        database.remove(entity.getId());
     }
 
     @Override
