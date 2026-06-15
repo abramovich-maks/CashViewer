@@ -5,5 +5,7 @@ public interface ValidationConstants {
     int PASSWORD_MAX_SIZE = 128;
     int CATEGORY_MIN_SIZE = 2;
     int CATEGORY_MAX_SIZE = 50;
+    int SUBCATEGORY_MIN_SIZE = 2;
+    int SUBCATEGORY_MAX_SIZE = 50;
 }
 
