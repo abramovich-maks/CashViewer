@@ -8,10 +8,17 @@ import java.util.Optional;
 
 interface CategoryRepository extends JpaRepository<CategoryEntity, Long> {
     @Query("""
-                SELECT c
+                SELECT DISTINCT c
                 FROM CategoryEntity c
-                WHERE c.ownerType = 'SYSTEM'
-                   OR c.user.id = :userId
+                LEFT JOIN FETCH c.subCategories sc
+                WHERE (c.ownerType = 'SYSTEM'
+                            OR c.user.id = :userId
+                      )
+                  AND (
+                        sc IS NULL
+                        OR sc.ownerType = 'SYSTEM'
+                        OR sc.user.id = :userId
+                      )
             """)
     List<CategoryEntity> findAllAvailableForUser(Long userId);
 
@@ -27,12 +34,18 @@ interface CategoryRepository extends JpaRepository<CategoryEntity, Long> {
     boolean existsAvailableCategoryByName(Long userId, String name);
 
     @Query("""
-                SELECT c
+                SELECT DISTINCT c
                 FROM CategoryEntity c
+                LEFT JOIN FETCH c.subCategories sc
                 WHERE c.id = :categoryId
                   AND (
                         c.ownerType = 'SYSTEM'
                         OR c.user.id = :userId
+                  )
+                  AND (
+                        sc IS NULL
+                        OR sc.ownerType = 'SYSTEM'
+                        OR sc.user.id = :userId
                   )
             """)
     Optional<CategoryEntity> findAvailableCategoryForUser(Long categoryId, Long userId);
