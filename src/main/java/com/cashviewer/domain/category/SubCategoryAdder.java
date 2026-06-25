@@ -20,7 +20,7 @@ class SubCategoryAdder {
     AddSubCategoryResponseDto addSubCategoryForUser(final Long currentUserId, final AddSubCategoryRequestDto requestDto) {
         CategoryEntity category = categoryRetriever.getCategoryEntity(requestDto.idCategory(), currentUserId);
 
-        if (subCategoryRetriever.existsSubCategoryByUserIdAndName(currentUserId, category.getName(), requestDto.subCategoryName())) {
+        if (subCategoryRetriever.existsSubCategoryByUserIdAndName(currentUserId, requestDto.idCategory(), requestDto.subCategoryName())) {
             throw new SubCategoryAlreadyExistsException(requestDto.subCategoryName());
         }
 

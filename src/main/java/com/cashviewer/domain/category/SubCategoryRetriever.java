@@ -9,8 +9,8 @@ class SubCategoryRetriever {
 
     private final SubCategoryRepository subCategoryRepository;
 
-    boolean existsSubCategoryByUserIdAndName(final Long currentUserId, final String categoryName, final String subCategoryName) {
-        return subCategoryRepository.existsAvailableSubCategoryByName(currentUserId, categoryName, subCategoryName);
+    boolean existsSubCategoryByUserIdAndName(final Long currentUserId, final Long categoryId, final String subCategoryName) {
+        return subCategoryRepository.existsSubCategoryByNameAndCategoryId(subCategoryName, categoryId, currentUserId);
     }
 
     public SubCategoryEntity getSubCategoryEntity(Long subCategoryId, Long categoryId, Long userId) {
