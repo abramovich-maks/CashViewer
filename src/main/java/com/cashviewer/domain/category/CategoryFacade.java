@@ -7,6 +7,8 @@ import com.cashviewer.domain.category.dto.AddSubCategoryResponseDto;
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
 import com.cashviewer.domain.category.dto.DeleteCategoryResponse;
+import com.cashviewer.domain.category.dto.DeleteSubCategoryRequest;
+import com.cashviewer.domain.category.dto.DeleteSubCategoryResponse;
 import com.cashviewer.domain.category.dto.UpdateCategoryRequest;
 import com.cashviewer.domain.category.dto.UpdateCategoryResponse;
 import com.cashviewer.domain.category.dto.UpdateSubCategoryRequest;
@@ -26,6 +28,7 @@ public class CategoryFacade {
     private final CategoryEditor categoryEditor;
     private final SubCategoryEditor subCategoryEditor;
     private final CategoryDeleter categoryDeleter;
+    private final SubCategoryDeleter subCategoryDeleter;
 
 
     public CategoryDto getCategoryById(Long categoryId) {
@@ -62,10 +65,14 @@ public class CategoryFacade {
         Long currentUserId = authenticationFacade.getCurrentUserId();
         return subCategoryEditor.updateSubCategory(currentUserId, requestDto);
     }
+
+    public DeleteSubCategoryResponse deleteSubCategory(DeleteSubCategoryRequest request) {
+        Long currentUserId = authenticationFacade.getCurrentUserId();
+        return subCategoryDeleter.deleteSubCategory(currentUserId, request);
+    }
+
     /*
      todo :
-      editSubCategory
-      deleteSubCategory
       getOnlyCategories
       getIncomeCategory
       getExpenseCategory
