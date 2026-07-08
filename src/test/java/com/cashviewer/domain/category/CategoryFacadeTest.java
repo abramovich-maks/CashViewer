@@ -2,6 +2,8 @@ package com.cashviewer.domain.category;
 
 import com.cashviewer.domain.category.dto.AddCategoryRequestDto;
 import com.cashviewer.domain.category.dto.AddCategoryResponseDto;
+import com.cashviewer.domain.category.dto.AddSubCategoryRequestDto;
+import com.cashviewer.domain.category.dto.AddSubCategoryResponseDto;
 import com.cashviewer.domain.category.dto.AllCategoryDto;
 import com.cashviewer.domain.category.dto.CategoryDto;
 import com.cashviewer.domain.category.dto.DeleteCategoryResponse;
@@ -21,6 +23,8 @@ import static org.mockito.Mockito.when;
 class CategoryFacadeTest {
 
     CategoryRepository categoryRepository = new CategoryRepositoryTestImpl();
+    SubCategoryRepository subCategoryRepository = new SubCategoryRepositoryImpl();
+
     CategoryEntityMapper categoryEntityMapper = new CategoryEntityMapperImpl();
     AuthenticationFacade authenticationFacade = mock(AuthenticationFacade.class);
     UserFacade userFacade = mock(UserFacade.class);
@@ -28,7 +32,13 @@ class CategoryFacadeTest {
     CategoryAdder categoryAdder = new CategoryAdder(categoryRetriever, categoryRepository, userFacade);
     CategoryEditor categoryEditor = new CategoryEditor(categoryRetriever, categoryRepository);
     CategoryDeleter categoryDeleter = new CategoryDeleter(categoryRetriever, categoryRepository);
-    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade, categoryAdder, categoryEditor, categoryDeleter);
+
+    SubCategoryRetriever subCategoryRetriever = new SubCategoryRetriever(subCategoryRepository);
+    SubCategoryEditor subCategoryEditor = new SubCategoryEditor(subCategoryRetriever, subCategoryRepository);
+    SubCategoryAdder subCategoryAdder = new SubCategoryAdder(categoryRetriever, subCategoryRetriever, subCategoryRepository, userFacade);
+    SubCategoryDeleter subCategoryDeleter = new SubCategoryDeleter(subCategoryRetriever, subCategoryRepository);
+
+    CategoryFacade categoryFacade = new CategoryFacade(categoryRetriever, authenticationFacade, categoryAdder, subCategoryAdder, categoryEditor, subCategoryEditor, categoryDeleter, subCategoryDeleter);
 
     @Test
     public void should_exception_when_find_category_with_not_found_id() {
@@ -437,5 +447,138 @@ class CategoryFacadeTest {
         categoryRepository.save(userCategory);
         // when && then
         assertThrows(CategoryNotFoundException.class, () -> categoryFacade.deleteCategory(notExistingCategory));
+    }
+
+    @Test
+    void should_add_subcategory() {
+        // given
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(1L);
+        categoryEntity.setName("Food");
+        categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.USER);
+
+        categoryRepository.save(categoryEntity);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        categoryEntity.setUser(user);
+        categoryRepository.save(categoryEntity);
+        AddSubCategoryRequestDto requestDto = new AddSubCategoryRequestDto("new subcategory", 1L);
+        // when
+        AddSubCategoryResponseDto addSubCategoryResponseDto = categoryFacade.addSubCategory(requestDto);
+        // then
+        assertThat(addSubCategoryResponseDto.subCategoryName()).isEqualTo("new subcategory");
+        assertThat(subCategoryRepository.findAll()).hasSize(1);
+        SubCategoryEntity saved = subCategoryRepository.findAll().getFirst();
+        assertThat(saved.getName()).isEqualTo("new subcategory");
+    }
+
+    @Test
+    void should_throw_exception_when_add_subcategory_and_parent_category_not_found() {
+        // given
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        AddSubCategoryRequestDto requestDto = new AddSubCategoryRequestDto("new subcategory", 1L);
+        // when
+        CategoryNotFoundException exception = assertThrows(CategoryNotFoundException.class, () -> categoryFacade.addSubCategory(requestDto));
+        // then
+        assertThat(exception.getMessage()).isEqualTo("Category with id: 1 not found");
+    }
+
+    @Test
+    void should_throw_exception_when_add_subcategory_to_category_of_another_user() {
+        // given
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(1L);
+        categoryEntity.setName("Food");
+        categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.USER);
+
+        categoryRepository.save(categoryEntity);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        categoryEntity.setUser(user);
+        categoryRepository.save(categoryEntity);
+        AddSubCategoryRequestDto requestDto = new AddSubCategoryRequestDto("new subcategory", 1L);
+        // when
+        when(authenticationFacade.getCurrentUserId()).thenReturn(2L);
+        CategoryNotFoundException exception = assertThrows(CategoryNotFoundException.class, () -> categoryFacade.addSubCategory(requestDto));
+        // then
+        assertThat(exception.getMessage()).isEqualTo("Category with id: 1 not found");
+    }
+
+    @Test
+    void should_not_add_duplicate_subcategory() {
+        // given
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(1L);
+        categoryEntity.setName("Food");
+        categoryEntity.setType(CategoryType.EXPENSE);
+        categoryEntity.setOwnerType(CategoryOwnerType.USER);
+
+        categoryRepository.save(categoryEntity);
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        when(userFacade.findById(1L)).thenReturn(user);
+        categoryEntity.setUser(user);
+        categoryRepository.save(categoryEntity);
+        AddSubCategoryRequestDto requestDto = new AddSubCategoryRequestDto("new subcategory", 1L);
+        categoryFacade.addSubCategory(requestDto);
+        assertThat(subCategoryRepository.findAll()).hasSize(1);
+        // when && then
+        SubCategoryAlreadyExistsException exception = assertThrows(SubCategoryAlreadyExistsException.class, () -> categoryFacade.addSubCategory(requestDto));
+        assertThat(exception.getMessage()).isEqualTo("SubCategory with name new subcategory already exists");
+    }
+
+
+    @Test
+    void should_allow_same_subcategory_name_for_another_user() {
+        // given
+        UserEntity userOne = new UserEntity();
+        userOne.setId(1L);
+
+        CategoryEntity categoryOne = new CategoryEntity();
+        categoryOne.setId(1L);
+        categoryOne.setName("Food");
+        categoryOne.setType(CategoryType.EXPENSE);
+        categoryOne.setOwnerType(CategoryOwnerType.USER);
+        categoryOne.setUser(userOne);
+
+        categoryRepository.save(categoryOne);
+
+        UserEntity userTwo = new UserEntity();
+        userTwo.setId(2L);
+
+        CategoryEntity categoryTwo = new CategoryEntity();
+        categoryTwo.setId(2L);
+        categoryTwo.setName("Food");
+        categoryTwo.setType(CategoryType.EXPENSE);
+        categoryTwo.setOwnerType(CategoryOwnerType.USER);
+        categoryTwo.setUser(userTwo);
+
+        categoryRepository.save(categoryTwo);
+
+        when(userFacade.findById(1L)).thenReturn(userOne);
+        when(userFacade.findById(2L)).thenReturn(userTwo);
+        // when
+        when(authenticationFacade.getCurrentUserId()).thenReturn(1L);
+        AddSubCategoryResponseDto responseUserOne = categoryFacade.addSubCategory(new AddSubCategoryRequestDto("new subcategory", 1L));
+        when(authenticationFacade.getCurrentUserId()).thenReturn(2L);
+        AddSubCategoryResponseDto responseUserTwo = categoryFacade.addSubCategory(new AddSubCategoryRequestDto("new subcategory", 2L));
+
+        // then
+        assertThat(responseUserOne.subCategoryName()).isEqualTo("new subcategory");
+        assertThat(responseUserTwo.subCategoryName()).isEqualTo("new subcategory");
+
+        assertThat(subCategoryRepository.findAll())
+                .hasSize(2)
+                .extracting(SubCategoryEntity::getName)
+                .containsExactlyInAnyOrder("new subcategory", "new subcategory");
+
+        assertThat(subCategoryRepository.findAll())
+                .extracting(sub -> sub.getUser().getId())
+                .containsExactlyInAnyOrder(1L, 2L);
     }
 }
